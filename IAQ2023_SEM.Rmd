@@ -145,58 +145,6 @@ AVE(fit2)
 ```
 
 
-### Second-Order Factors and Why They Usually Suck
-
-Now, as a slight digression into theory and the dangers of forgetting about it, it would be seductively easy to create a 'second order' or 'multidimensional' construct here...
-
-```{r}
-# specify the model
-OC.model <- ' Identification  =~ oc6 + oc2 + oc13 + oc14 + oc1 + oc10 + oc15 + oc3 + oc12     
-              Loyalty =~ oc9 + oc11 + oc7
-              Values   =~ oc4 + oc5 + oc8 
-              Comm =~ Identification + Loyalty + Values'
-
-# fit the model
-fit <- cfa(OC.model, data = OC)
-
-# display summary output
-summary(fit, fit.measures = TRUE, standardized=TRUE)
-```
-
-I can even get CR, although I'd have to calculate AVE by hand I guess...
-
-```{r}
-compRelSEM(fit, higher = "Comm")
-```
-
-I can get a cool plot. Looks very nice...
-
-```{r}
-lavaanPlot(model = fit, node_options = list(shape = "box", fontname = "Helvetica"), edge_options = list(color = "grey"), coefs = TRUE, stand = TRUE)
-```
-
-We could actually do the same for the Intelligence data set...
-
-```{r}
-# specify the model
-HS.model <- ' visual  =~ x1 + x2 + x3      
-              textual =~ x4 + x5 + x6
-              speed   =~ x7 + x8 + x9 
-              Gen. Intel =~ visual + textual + speed'
-
-# fit the model
-fit <- cfa(HS.model, data = HolzingerSwineford1939)
-
-# display summary output
-summary(fit, fit.measures = TRUE, standardized=TRUE)
-
-lavaanPlot(model = fit, node_options = list(shape = "box", fontname = "Helvetica"), edge_options = list(color = "grey"), coefs = TRUE, stand = TRUE)
-```
-
-But, should we? What could 'Comm', or 'GenIntel' actually mean? You'll see this in loads of papers by the way, but I think it almost never works.
-
-Let's have a chat about this, moving back to the slides...
-
 ## Idealism Example
 
 This example is of a single factor called 'Idealism', a personal moral philosophy measure developed in a paper by Forsyth (1980) and which I used in a paper in 2009 (Cadogan et al., 2009). We're going to use a segment of my data set to demonstrate a number of things - most of which concern how to deal with really bad sets of items!

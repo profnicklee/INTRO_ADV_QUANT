@@ -36,7 +36,7 @@ OC<-read_excel("Data/EXCERCISE_1_OC.xlsx")
 
 ## Looking at the Data, and Basic Analysis
 
-From here, the rest of the programs describe some simple factor analysis of data from my PhD, which are 143 subjects' responses to the Organizational Committment items first published by Mowday et al. (1974). These items have been analysed in many papers, and I haven't published these results anywhere, as OC was not a major part of the final work I published. However, they make a nice factor analysis example.
+The next few sections describe some simple factor analysis of data from my PhD, which are 143 subjects' responses to the Organizational Commitment items first published by Mowday et al. (1974). These items have been analysed in many papers, and I haven't published these results anywhere, as OC was not a major part of the final work I published. However, they make a nice factor analysis example.
 
 First, we describe the data
 
@@ -127,7 +127,7 @@ Next, the parallel test, which does some simulations to see what the best descri
 fa.parallel(OC)
 ```
 
-This suggests two factors... (don't worry here about any error messages, we are not using this for anything other than an indication, not the final solution)
+This suggests two factors... 
 
 Finally, we could use the 'very simple structure' method:
 
