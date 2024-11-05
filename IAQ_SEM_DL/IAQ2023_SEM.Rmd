@@ -1,0 +1,345 @@
+---
+title: "FA and SEM Part 2: CFA and SEM"
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+
+# SEM Set Up
+
+You will need the relevant packages installed to replicate my analysis.
+
+```{r, eval=FALSE}
+install.packages("lavaan")
+install.packages("semTools")
+install.packages("psych")
+install.packages("lavaanPlot")
+```
+
+
+```{r}
+library("lavaan")
+library("semTools")
+library("readxl")
+library("psych")
+library("lavaanPlot")
+
+```
+
+
+# Confirmatory Factor Analysis
+
+## Basic Introduction and Test Run
+
+Let's begin with a test run, using the Holzinger and Swineford 'intelligence' data set, the classic factor analysis data we have looked at multiple times. Helpfully, the writers of Lavaan included this for us in Lavaan so we don't even need to load in it. Thanks!
+
+```{r}
+describe(HolzingerSwineford1939)
+```
+
+We'll begin by running a simple confirmatory factor model.
+
+```{r}
+# specify the model
+HS.model <- ' visual  =~ x1 + x2 + x3      
+              textual =~ x4 + x5 + x6
+              speed   =~ x7 + x8 + x9 '
+
+# fit the model
+fit <- cfa(HS.model, data = HolzingerSwineford1939)
+
+# display summary output
+summary(fit, fit.measures = TRUE, standardized = TRUE)
+```
+
+```{r}
+lavaanPlot(model = fit, node_options = list(shape = "box", fontname = "Helvetica"), edge_options = list(color = "grey"), coefs = TRUE, stand = TRUE)
+```
+
+## Revisiting Organizational Commitment
+
+Let's move on to the Organizational Commitment example from the exploratory factor analysis lecture. Remember, we settled on a three-factor structure using Principal Axis Factoring with Oblimin rotation using EFA earlier.
+
+Ideally we would now go and collect more data to test using this confirmatory approach. But, here we are...
+
+Let's read in the data...
+
+```{r}
+OC<-read_excel("Data/EXCERCISE_1_OC.xlsx")
+describe(OC)
+```
+
+Now we specify the model. I have named my three factors along the lines of our EFA
+
+One factor is called Identification, one Loyalty, and one Values.
+
+Go take a look at the item sheet if you want to refresh your memory on the items
+
+Let's not debate here on what 'Organizational Commitment' really might be....
+
+```{r}
+# specify the model
+OC.model <- ' Identification  =~ oc6 + oc2 + oc13 + oc14 + oc1 + oc10 + oc15 + oc3 + oc12     
+              Loyalty =~ oc9 + oc11 + oc7
+              Values   =~ oc4 + oc5 + oc8 '
+
+# fit the model
+fit <- cfa(OC.model, data = OC)
+
+# display summary output
+summary(fit, fit.measures = TRUE, standardized=TRUE)
+
+```
+
+The model fits fairly well.
+
+We can also create another cool diagram if we want:
+
+```{r}
+lavaanPlot(model = fit, node_options = list(shape = "box", fontname = "Helvetica"), edge_options = list(color = "grey"), coefs = TRUE, stand = TRUE)
+```
+
+Let's pop back to the slides and talk about basic assessment of this model.
+
+Our model can likely be improved through looking for problems either with cross loading items, or correlated errors, which we can observe through the modification indices:
+
+```{r}
+modindices(fit, sort = TRUE, maximum.number = 25)
+```
+
+Lavaan has quite a cool way to present MIs, you can see that I have asked it to select the 25 highest ones, and to sort them in order. Your own mileage may vary in terms of whether to preselect ones, and what 'high' means. Usually, we are especially interested in those who are over 5 or so, and paying special attention to those around \>8. I would also look for terms in the lhs and rhs columns which are repeated.
+
+We can discuss this general approach on the slides in more depth.
+
+```{r}
+# specify the model
+OC.model <- ' Identification  =~ oc6 + oc2 + oc14 + oc1 + oc10 + oc3 + oc12     
+              Loyalty =~ oc9 + oc11 + oc7
+              Values   =~ oc4 + oc5 + oc8 '
+
+# fit the model
+fit2 <- cfa(OC.model, data = OC)
+
+# display summary output
+summary(fit2, fit.measures = TRUE, standardized=TRUE)
+
+```
+
+While I have excel spreadsheets to do this, semTOOLS also gives me some handy commands to calculate Composite Reliability and Average Variance Extracted...
+
+```{r}
+compRelSEM(fit)
+AVE(fit)
+```
+
+```{r}
+compRelSEM(fit2)
+AVE(fit2)
+```
+
+
+## Idealism Example
+
+This example is of a single factor called 'Idealism', a personal moral philosophy measure developed in a paper by Forsyth (1980) and which I used in a paper in 2009 (Cadogan et al., 2009). We're going to use a segment of my data set to demonstrate a number of things - most of which concern how to deal with really bad sets of items!
+
+Cadogan, J. W., Lee, N., Tarkiainen, A., & Sundqvist, S. (2009). Sales manager and sales team determinants of salesperson ethical behaviour. European Journal of Marketing.
+
+Forsyth, D. R. (1980). A taxonomy of ethical ideologies. Journal of Personality and Social psychology, 39(1), 175.
+
+```{r}
+IDEAL<-read_excel("D:/Dropbox/R_Files/Data/IDEALISM.xlsx")
+describe(IDEAL)
+```
+
+First, let us specify a one factor model, where the 10 items load on one factor.
+
+```{r}
+# specify the model
+IDEAL.model <- 'Idealism  =~ PMP11 + PMP12 + PMP13 + PMP14 + PMP15 + PMP16 + PMP17 + PMP18 + PMP19 + PMP20'
+
+# fit the model
+fit <- cfa(IDEAL.model, data = IDEAL)
+
+# display summary output
+summary(fit, fit.measures = TRUE, standardized=TRUE)
+
+lavaanPlot(model = fit, node_options = list(shape = "box", fontname = "Helvetica"), edge_options = list(color = "grey"), coefs = TRUE, stand = TRUE)
+```
+
+The fit is bad, and the loadings are poor for many items. The first thing I would do here is get rid of PMP20, and probably PMP19 too.
+
+Let's do that and re-run the model:
+
+```{r}
+# specify the model
+IDEAL.model <- 'Idealism  =~ PMP11 + PMP12 + PMP13 + PMP14 + PMP15 + PMP16 + PMP17 + PMP18'
+
+# fit the model
+fit2 <- cfa(IDEAL.model, data = IDEAL)
+
+# display summary output
+summary(fit2, fit.measures = TRUE, standardized=TRUE)
+
+lavaanPlot(model = fit2, node_options = list(shape = "box", fontname = "Helvetica"), edge_options = list(color = "grey"), coefs = TRUE, stand = TRUE)
+```
+
+That's an obvious improvement, but there are still problems, as evidenced by the poor fit.
+
+In a simple 1-factor CFA, there really aren't too many places problems can come from...
+
+So let's look at the modification indices. Now, remember we can't have cross-loadings here, so all the MIs will refer to correlated errors, since those are the only parts of the model that are fixed (to 0)
+
+```{r}
+modindices(fit2, sort = TRUE, maximum.number = 25)
+```
+
+Yuck, there's a giant one there between PMP11 and PMP12, and another few big ones.
+
+Let's go back to the slides to discuss the interpretation of what this means in some more detail.
+
+So, with that discussion in mind, which to drop? First, I would drop PMP 11. By doing so, I would also remove some other correlated errors (e.g. with PMP15).
+
+```{r}
+# specify the model
+IDEAL.model <- 'Idealism  =~ PMP12 + PMP13 + PMP14 + PMP15 + PMP16 + PMP17 + PMP18'
+
+# fit the model
+fit3 <- cfa(IDEAL.model, data = IDEAL)
+
+# display summary output
+summary(fit3, fit.measures = TRUE, standardized=TRUE)
+
+lavaanPlot(model = fit3, node_options = list(shape = "box", fontname = "Helvetica"), edge_options = list(color = "grey"), coefs = TRUE, stand = TRUE)
+```
+
+The fit is quite a bit better, but still not great. I imagine if we looked at the MIs again, we could find more improvements...
+
+```{r}
+modindices(fit3, sort = TRUE, maximum.number = 25)
+```
+
+PMP13 seems quite problematic, so I would probably bump that out too...
+
+```{r}
+# specify the model
+IDEAL.model <- 'Idealism  =~ PMP12 + PMP14 + PMP15 + PMP16 + PMP17 + PMP18'
+
+# fit the model
+fit4 <- cfa(IDEAL.model, data = IDEAL)
+
+# display summary output
+summary(fit4, fit.measures = TRUE, standardized=TRUE)
+
+lavaanPlot(model = fit4, node_options = list(shape = "box", fontname = "Helvetica"), edge_options = list(color = "grey"), coefs = TRUE, stand = TRUE)
+```
+
+```{r}
+compRelSEM(fit4)
+AVE(fit4)
+```
+
+That's better, but still pretty mediocre. Although AVE and CR suggest I am ok.
+
+Look, to be honest, the measure itself is not that great. You CAN get a decent unidimensional set here, if you poke around long enough.
+
+Maybe that should be your task from here...
+
+But remember, after poking around and modifying things, you should really collect a new set of data to test this model, or else you are in danger of bad practice.
+
+# Building a Structural Model of Export Market Orientation
+
+For the final part of the class, we'll build a structural model step by step. Most of the heavy lifting is already done in the early examples, so this is mainly a practical task.
+
+First, load in the data:
+
+```{r}
+EMO<-read_excel("Data/MARKOR.xlsx")
+describe(EMO)
+```
+
+We have a decently-large data file, because this isn't my data and the person who collected it was a much more conscientious and hardworking doctoral student than me.
+
+We could do as much description as we like on this data file, and naturally I would recommend that first. Here we are just going to go with it. One thing you might notice is that some of the data is standardized (e.g. zsale etc). A common question is whether SEM can handle data on different scales. The answer is yes in general. I would probably shy away from including items with massively different scales / ranges in a single multi-item measure though. That's why we standardized some of the data - e.g. the sales numbers. You might in the end have standardized the whole data set I suppose. As I said, this isn't my data so I didn't make these decisions.
+
+Anyway, onwards. Let's build first a CFA Model. It's fairly obvious what items should be measuring what constructs given the naming conventions we have, so let's get to it:
+
+```{r}
+# specify the model
+EMO.CFA <- ' Exp.Connect  =~ conect01 + conect02 + conect03 + conect05     
+              Coord.Mech =~ cm_02 + cm_03 + cm_04 + cm_05 +cm_06
+              Sales   =~ zsale1 + zsale2 + zsale3 + zsale4 
+              Profit =~ zprof1 + zprof2'
+
+# fit the model
+fitCFA <- cfa(EMO.CFA, data = EMO)
+
+# display summary output
+summary(fitCFA, fit.measures = TRUE, standardized=TRUE)
+```
+
+Let's plot it
+
+```{r}
+lavaanPlot(model = fitCFA, node_options = list(shape = "box", fontname = "Helvetica"), edge_options = list(color = "grey"), coefs = TRUE, stand = TRUE)
+```
+
+Quick look at the measure reliability and validity:
+
+```{r}
+compRelSEM(fitCFA)
+AVE(fitCFA)
+```
+
+These are OK, although you wouldn't be partying about them (e.g. the AVEs are mediocre)
+
+We could also spend some time further assessing the measures if we wanted, using Mod Indices, AVE, CR etc. There are some improvements that could be made in fact. Again though, post-hoc modification of the theorized model places you on some potentially shaky ground in terms of bad practice, so the best idea would be to collect more data if so...
+
+Have a look yourself in your own time...
+
+But, they're ok, and that's not the point of this exercise.
+
+So, what we do now is add the structural model on to the CFA.
+
+```{r}
+# specify the model
+EMO.SEM <- ' Exp.Connect  =~ conect01 + conect02 + conect03 + conect05     
+              Coord.Mech =~ cm_02 + cm_03 + cm_04 + cm_05 +cm_06
+              Sales   =~ zsale1 + zsale2 + zsale3 + zsale4 
+              Profit =~ zprof1 + zprof2
+
+#now we need to add the regression equations for our SEM
+
+              Sales ~ Exp.Connect + Coord.Mech
+              Profit ~ Sales'
+
+# fit the model
+fitSEM <- cfa(EMO.SEM, data = EMO)
+
+# display summary output
+summary(fitSEM, fit.measures = TRUE, standardized=TRUE)
+```
+
+Now, we can plot it too, for an easy way to check it out.
+
+```{r}
+lavaanPlot(model = fitSEM, node_options = list(shape = "box", fontname = "Helvetica"), edge_options = list(color = "grey"), coefs = TRUE, stand = TRUE)
+```
+
+Let's have a chat about this. Back to the slide deck...
+
+```{r}
+modindices(fitSEM, sort = TRUE, maximum.number = 25)
+```
+
+Let's have another chat...
+
+And... we're done!
+
+Good job.
