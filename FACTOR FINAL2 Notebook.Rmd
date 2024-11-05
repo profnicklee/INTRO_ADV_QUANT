@@ -1,0 +1,164 @@
+---
+title: "FA and SEM Part 1: EFA"
+output: html_document
+date: "2023-11-05"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+# Factor Analysis in R: Introduction
+
+You will need the relevant packages installed to replicate my analysis.
+
+```{r, eval=FALSE}
+install.packages("readxl")
+install.packages("psych")
+install.packages("psychTools")
+install.packages("GPArotation")
+install.packages("semTools")
+```
+
+```{r}
+library(psych)
+library(psychTools)
+library(readxl)
+library(GPArotation)
+library(semTools)
+```
+
+Load data.
+
+```{r}
+OC<-read_excel("Data/EXCERCISE_1_OC.xlsx")
+```
+
+## Looking at the Data, and Basic Analysis
+
+From here, the rest of the programs describe some simple factor analysis of data from my PhD, which are 143 subjects' responses to the Organizational Committment items first published by Mowday et al. (1974). These items have been analysed in many papers, and I haven't published these results anywhere, as OC was not a major part of the final work I published. However, they make a nice factor analysis example.
+
+First, we describe the data
+
+```{r}
+describe(OC)
+```
+
+```{r}
+headTail(OC)
+```
+
+Next, we look at some descriptive analysis - namely the correlations between the items.
+
+Below are three ways to look at correlations in an item bank.
+
+The first is the pairs.panels function. This gives you three types of information.
+
+Above the diagonal are the pearson correlations Below the diagonal are scatterplots of the bivariate relationship The diagonal are histograms of each variable
+
+This is a lot of useful information, but can be overwhelming with a lot of items
+
+```{r}
+pairs.panels(OC)
+```
+
+Next is a simple correlation matrix, as you might get in any other old-school package.
+
+```{r}
+lowerCor(OC)
+```
+
+Next is a 'heatmap'. The size of the correlation is represented by the colour of the square and the font size of each number. It's a very cool way to get a visual of the data.
+
+```{r}
+
+corPlot(OC, numbers=TRUE, main="Organizational Committment Variables")
+
+```
+
+What Mowday et al (1974) do next is calculate coefficient alpha for the item bank, which is simple in R:
+
+```{r}
+alpha(OC)
+```
+
+Alpha is just a metric for internal consistency, and is problematic to the extent that it simply measures intercorrelation, not what that intercorrelation 'means'. It is also biased by the number of items - more items always means higher alpha.
+
+So, large item banks like this which are moderately intercorrelated, tend to return high alphas. That's in part at least, why you see lots of psychological tests from this period consist of many items. This high alpha does not mean there are not multiple factors possible.
+
+Unfortunately, this is where the original Mowday article stops...but we can go further...
+
+## Doing Factor Analysis
+
+We can now look at some statistical metrics to see whether the data are suitable for factor analysis:
+
+```{r}
+KMO(OC)
+```
+
+The Kaiser-Meyer-Olkin (KMO) test is a standard was to assess the suitability of a data set for factor analysis. You are looking for a KMO value of 0.6 or more. Here it is 0.91, so we are good
+
+```{r}
+cortest.bartlett(OC)
+```
+
+The Bartlett test is another one we can use. Here you are looking for a p-value \<0.05
+
+Ours certainly is that (note the scientific notation)
+
+The next step now depends on a few things. You may have an idea of how many factors underlies the data, or you may not. Technically, we are doing 'exploratory' factor analysis, so we don't have an idea of how many factors there are (indeed, the original authors didn't even consider this...)
+
+If you do not have *a priori* expectations, you can go one of two ways.
+
+1.  Pure exploratory - in SPSS for example, you just run the model, and see what happens...
+
+2.  In more recent times, there are some analyses we can do to get some indications, which are easily done on R
+
+First, the Empirical Kaiser Criterion, which is a modification of the old-school Kaiser Criterion, designed to correct for the variables / sample size ratio and the prior eigenvalues observed.
+
+```{r}
+efa.ekc(data = OC, sample.cov = NULL, sample.nobs = NULL,
+  missing = "default", ordered = NULL, plot = TRUE)
+```
+
+Next, the parallel test, which does some simulations to see what the best description of your data is:
+
+```{r}
+fa.parallel(OC)
+```
+
+This suggests two factors... (don't worry here about any error messages, we are not using this for anything other than an indication, not the final solution)
+
+Finally, we could use the 'very simple structure' method:
+
+```{r}
+vss(OC)
+```
+
+It is admittedly challenging to interpret this, and also in conjunction with the parallel results as well. My guess is that the right structure is somewhere between 1 (what the original authors assumed) and 3 (what the EKC and also my Ph.D. analysis using the old-school KC found) factors.
+
+What I would do here is probably test models for all 3 and see which one made most sense, so I will do so below.
+
+**One Factor Solution**
+
+```{r}
+fa1<-(fa(OC,1, fm="pa"))
+print(fa1)
+fa.diagram(fa1)
+```
+
+**Two Factor Solution**
+
+```{r}
+fa2<-(fa(OC,2, n.obs=143, rotate="oblimin", fm="pa"))
+print(fa2)
+fa.diagram(fa2)
+```
+
+**Three Factor Solution**
+
+```{r}
+fa3<-(fa(OC,3, n.obs=143, rotate="oblimin", fm="pa"))
+print(fa3)
+fa.diagram(fa3)
+```
